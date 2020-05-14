@@ -7,7 +7,7 @@
 
     <script src="transpose_functions.js?v=2.65"></script>
     
-    // this uses the namespace object osmd_transpose to access transpose functions.js
+    <!-- this uses the namespace object osmd_transpose to access transpose functions.js -->
     
     <style>
 
@@ -240,23 +240,24 @@ function get_parameters_from_elements()
                             <label>Transpose to key</label>
                             <select id = "transpose_key" name="transpose_key"  onchange="save_parameter_change();">
                                 <option value = "None">None</option>
-                                <option value = "Ab">Ab</option>
-                                <option value = "A">A</option>
-                                <option value = "A#">A#</option>
-                                <option value = "Bb" >Bb</option>
-                                <option value = "B">B</option>
-                                <option value = "C">C</option>
-                                <option value = "C#" selected>C#</option>
-                                <option value = "Db">Db</option>
-                                <option value = "D">D</option>
-                                <option value = "D#">D#</option>
-                                <option value = "Eb">Eb</option>
-                                <option value = "E">E</option>
-                                <option value = "F">F</option>
-                                <option value = "F#">F#</option>
-                                <option value = "Gb">Gb</option>
-                                <option value = "G">G</option>
-                                <option value = "G#">G#</option>
+                                <option value = "Ab">Ab / Fm</option>
+                                <option value = "A">A / F#m</option>
+                                    <!-- <option value = "A#">A#</option> -->
+                                <option value = "Bb" >Bb / Gm</option>
+                                <option value = "B">B / G#m</option>
+                                <option value = "Cb">C / Abm</option>
+                                <option value = "C">C / Am</option>
+                                <option value = "C#" selected>C# / A#m</option>
+                                <option value = "Db">Db / Bbm</option>
+                                <option value = "D">D / Bm</option>
+                                    <!-- <option value = "D#">D#</option> -->
+                                <option value = "Eb">Eb / Cm</option>
+                                <option value = "E">E / C#m</option>
+                                <option value = "F">F / Dm</option>
+                                <option value = "F#">F# / D#m</option>
+                                <option value = "Gb">Gb / Ebm</option>
+                                <option value = "G">G / Em</option>
+                                    <!-- <option value = "G#">G#</option> -->
                             </select>
 
 
@@ -289,6 +290,8 @@ function get_parameters_from_elements()
                 <input type=text name="output_file_name" id = "output_file_name" >
                         </p>
 
+         <p><hr></p>
+
             <div id='prepare_output_file' style='display:none;'>
                 <button onclick="prepare_output_file();">Prepare Output File</button>
                 <br>Click the Download button after 'Prepare Output File'
@@ -301,7 +304,12 @@ function get_parameters_from_elements()
         <div id=download_div style="display:none;">
             <a id="download_link" target="_blank" download="test.xml" ><button>Click here to Download <span id=download_output></span></button></a>
         </div>
-        <div id=transposed_score>Transposed Score</div>
+
+        <p><hr></p>
+
+        <button onclick="show_transposed_score();">Show Transposed Score</button>
+        <button onclick="copy_transposed_score();">Copy Transposed Score to Clipboard</button>
+        <div id=transposed_score style="display: none;">Transposed Score</div>
 
         <script>
         var elt_value;
@@ -310,8 +318,38 @@ function get_parameters_from_elements()
     var osmds = new Array(5);
 
     var xml_strings = [];
+    var xml_string;
 
 
+    function show_transposed_score()
+    {
+        elt = document.getElementById("transposed_score");
+        elt.style.display = "block";
+    }
+
+    function copy_transposed_score()
+    {
+        if (!xml_string || xml_string == "")
+            alert("No Transposed Score availble");
+        else
+        {
+            copyToClipboard(xml_string);
+            alert(xml_string.length + " bytes copied to clipboard");
+        }
+    }
+
+    function copyToClipboard(text) {
+        var dummy = document.createElement("textarea");
+        // to avoid breaking orgain page when copying more words
+        // cant copy when adding below this code
+        // dummy.style.display = 'none'
+        document.body.appendChild(dummy);
+        //Be careful if you use texarea. setAttribute('value', value), which works with "input" does not work with "textarea". – Eduard
+        dummy.value = text;
+        dummy.select();
+        document.execCommand("copy");
+        document.body.removeChild(dummy);
+    }
 
 
 
@@ -426,6 +464,9 @@ function get_parameters_from_elements()
         if (parameters.transpose_key != "None");
         {
             xml_string = osmd_transpose.transpose_xml(parameters, xml_string);
+
+            elt = document.getElementById("transposed_score");
+            elt.innerText = xml_string_out;
 
             // build output file name
             output_file_name = get_element_value("output_file_name");

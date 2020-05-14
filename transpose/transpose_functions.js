@@ -678,8 +678,7 @@
         xml_string_out = str_out;
         console.log("NEW xml_string_out length: %s", xml_string_out.length);
 
-        elt = document.getElementById("transposed_score");
-        elt.innerText = xml_string_out;
+
 
         return(xml_string_out);
     }
