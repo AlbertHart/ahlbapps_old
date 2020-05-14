@@ -669,9 +669,9 @@
 
             str_out += sline + "\n";
 
-            //if (show_output)
-            //    console.log("indexOf(</pitch): %s", sline.indexOf("</pitch"));
-        
+            if (show_output) {
+                console.log("indexOf(</pitch): %s", sline.indexOf("</pitch"));
+            }
             
         }
 
