@@ -49,13 +49,6 @@
             "G#", "D#", "A#", "F", "C", "G", "D", 
     ];
 
-    osmd_transpose.test = function() {
-        console.log(this.line_of_fifths); 
-    }
-
-    //osmd_transpose.test();
-
-
     // generate letters for each new line_)of_fifths number
     osmd_transpose.line_of_fifths_numbers = {
         "Gb": 23,
@@ -150,38 +143,22 @@
         "A#" : 11,
         "Bb" : 11,
         "B" : 12,
-        "Cb" : 12
+        "Cb" : 12,
     };
 
 
-    // when to bump the octave
-    osmd_transpose.octave_numbers = {
-        "Cb" : 1,
 
-        "C" : 2,
-        "C#" : 3,
-        "Db" : 4,
-        "D" : 5,
-        "D#" : 6,
-        "Eb" : 7,
-        "E" : 8,
 
-        "Fb" : 9,
-        "E#" : 10,
-
-        "F" : 11,
-        "F#" : 12,
-        "Gb" : 13,
-        "G" : 14,
-        "G#" : 15,
-        "Ab" : 16,
-        "A" : 17,
-        "A#" : 18,
-        "Bb" : 19,
-        "B" : 20,
-
-        "B#" : 21
         
+    // when to bump the octave
+    osmd_transpose.step_number = {
+        "C" : 0,
+        "D" : 1,
+        "E" : 2,
+        "F" : 3,
+        "G" : 4,
+        "A" : 5,
+        "B" : 6,      
     };
 
     osmd_transpose.new_key;
@@ -218,12 +195,23 @@
         old_key_number = this.note_numbers[old_key];
         new_key_number = this.note_numbers[new_key];
         key_offset = new_key_number - old_key_number;
+
+        up_offset = (key_offset + 12) % 12; // move up
+        down_offset = (key_offset - 12) % 12; // move down
+
         if (parameters.transpose_direction == "up")
-            key_offset = (key_offset + 12) % 12; // move up
+            key_offset = up_offset; // move up
         else if (parameters.transpose_direction == "down")
-            key_offset = (key_offset - 12) % 12; // move down
+            key_offset = down_offset; // move down
+        else    // closest
+        {
+            // get closest offset
+            
+            if (Math.abs(up_offset) <= Math.abs(down_offset))
+                key_offset = up_offset;
         else
-            key_offset = (key_offset + 6) % 12 - 6; // get closest offset
+                key_offset = down_offset;
+        }
         
         new_fifths = this.line_of_fifths_numbers[new_key] - this.line_of_fifths_numbers["C"];
         //console.log("old_key: %s new_key: %s key_offset: %s new_fifths: %s", old_key, new_key, key_offset, new_fifths);
@@ -244,17 +232,21 @@
             new_alter = "-1";
 
         // offset octave
-        old_note_number = this.note_numbers[old_note];
-        new_note_number = this.note_numbers[new_note];
+        //old_note_number = this.note_numbers[old_note];
+        //new_note_number = this.note_numbers[new_note];
+        old_step_number = this.step_number[old_step];
+        new_step_number = this.step_number[new_step];
 
         new_octave = Number(old_octave);    // ADH - calculate change of octave
-        if (key_offset > 0 && new_note_number < old_note_number)
+        if (key_offset > 0 && new_step_number < old_step_number)
             new_octave += 1;
-        else if (key_offset < 0 && new_note_number > old_note_number)
+        else if (key_offset < 0 && new_step_number > old_step_number)
             new_octave -= 1;
         
         if (show_output)
-            console.log("transpose: NEW new_note: %s new_step: %s new_alter: %s new_octave: %s", new_note, new_step, new_alter, new_octave);
+            console.log(`npos1: %s npos2: %s old_octave: %s old_step: %s old_step_number: %s 
+                new_step: %s new_step_number: %s new_alter: %s new_octave: %s`, 
+                npos1, npos2, old_octave, old_step, old_step_number, new_step, new_step_number, new_alter, new_octave);
         transposed_note = {
             "note": new_note,
             "step": new_step,
@@ -669,9 +661,7 @@
 
             str_out += sline + "\n";
 
-            if (show_output) {
-                console.log("indexOf(</pitch): %s", sline.indexOf("</pitch"));
-            }
+
             
         }
 
