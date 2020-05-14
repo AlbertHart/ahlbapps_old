@@ -1,0 +1,455 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Transpose MusicXML</title>
+
+
+    <script src="transpose_functions.js?v=2.65"></script>
+    
+    // this uses the namespace object osmd_transpose to access transpose functions.js
+    
+    <style>
+
+
+
+    .form_element {
+        font-size: 2.0vw;
+    }
+
+    
+
+        input[type=submit] { color: #050; background-color: #ff8080; }
+
+        input[type="text"] {
+            font-size: 20px;
+            color: #050; background-color: #e0e0e0;
+        }
+
+        input {
+            width: 40em;
+            font-size: 18px;
+            }
+     
+
+        button, input[type="button"], input[type="submit"], input[type="file"] { 
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+        select {
+            display: block;
+            font-size: 16px;
+            font-family: sans-serif;
+            font-weight: 700;
+            color: #444;
+            line-height: 1.3;
+            padding: .6em 1.4em .5em .8em;
+            xxwidth: 100%;
+            width: 25%;
+            max-width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            border: 1px solid #aaa;
+            box-shadow: 0 1px 0 1px rgba(0,0,0,.04);
+            border-radius: .5em;
+            -moz-appearance: none;
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #fff;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'),
+            linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
+            background-repeat: no-repeat, repeat;
+            background-position: right .7em top 50%, 0 0;
+            background-size: .65em auto, 100%;
+        }
+        select::-ms-expand {
+            display: none;
+        }
+        select:hover {
+            border-color: #888;
+        }
+        select:focus {
+            border-color: #aaa;
+            box-shadow: 0 0 1px 3px rgba(59, 153, 252, .7);
+            box-shadow: 0 0 0 3px -moz-mac-focusring;
+            color: #222;
+            outline: none;
+        }
+        select option {
+            font-weight:normal;
+        }
+
+    </style>
+
+
+
+    <script>
+        var vars = {};
+        var parameters = {};
+
+        var old_key;
+        var new_key;
+        var key_offset;
+        
+        function getUrlVars()
+        {
+            
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) 
+            {
+                vars[key] = value;
+            });
+            return vars;
+        }
+        getUrlVars();
+
+        var song_name;
+        var openFile = function (event) {
+        	var elt = document.getElementById('get_file'); 
+            song_name = elt.files.item(0).name;             
+	        console.log("(IN OPEN FILE: song_name: %s", song_name);
+            set_element_value("song_name", song_name);
+            parameters.song_name = song_name;
+            
+	        
+	        var input = event.target;  
+           
+            reader = new FileReader();
+            reader.onload = fileLoaded;
+            flag = 1; // reading
+            console.log("SET FLAG: %s READING", flag);
+            reader.readAsText(input.files[0]);
+        };
+
+    
+        
+    // these read the latest parameters
+    function add_to_parameters(svar)
+    {
+        value = get_element_value(svar);
+        //console.log("add_to_parameters: svar: %s: value: %s", svar, value);
+        parameters[svar] = value;
+
+    }
+
+function get_parameters_from_elements()
+    {
+        add_to_parameters("transpose_key");
+        add_to_parameters("transpose_direction");
+    }
+    
+    var fileLoaded = function (event) {
+        console.log("fileLoaded: event.target.result: %s", event.target.result.substr(0, 100));
+
+        xml_string_loaded = event.target.result;
+        console.log("xml_string_loaded length: %s", xml_string_loaded.length);
+
+     
+        // store xml and name for reload
+        localStorage.setItem('song_data', xml_string_loaded);
+        console.log("localStorage.setItem('song_name',%s);", song_name);
+        localStorage.setItem('song_name', song_name);
+
+        
+
+        do_transpose();
+
+    
+
+    }
+
+    // to save output
+    function prepare_output_file()
+    {
+        console.log("SAVE OUTPUT FILE");
+
+        output_string = xml_string;
+
+        output_file_name = get_element_value("output_file_name");
+        console.log("prepare_output_file: output_file_name: %s", output_file_name);
+
+        if (!output_file_name)
+            output_file_name = "transposed_file.musicxml";
+
+        var properties = {type: 'text/plain'}; // Specify the file's mime-type.
+
+        elt = document.getElementById("download_output");
+        elt.innerText = output_file_name;
+
+        data = [output_string];
+        console.log("string DATA length: %s", data.length);
+
+        try 
+        {
+            // Specify the filename using the File constructor, but ...
+            console.log("SAVE AS FILE");
+            // we will want to get output file name
+            file = new File(data, output_file_name, properties);
+        } 
+        catch (e) 
+        {
+            // ... fall back to the Blob constructor if that isn't supported.
+            console.log("SAVE AS BLOB");
+            file = new Blob(data, properties);
+        }
+        console.log("After create FILE");
+        var url = URL.createObjectURL(file);
+        download_div_elt = document.getElementById('download_div');
+        download_div_elt.style.display = "block";
+        download_elt = document.getElementById('download_link');
+        download_elt.download = output_file_name;
+        download_elt.href = url;
+        console.log("After set download_link href");
+    }
+
+    
+    </script>
+
+</head>
+    <body>
+       <div class='noprint' style="font-size: 24px">
+
+
+ 
+                    <p class=font_element>
+                            <label>Song Name:</label>
+                            <input type=text id = "song_name" name="song_name"   onchange="save_parameter_change();">
+                    </p>
+
+                   
+
+
+                    <p class=font_element>
+                            <label>Transpose Direction</label>
+                            <select id = "transpose_direction" name="transpose_direction" "   onchange="save_parameter_change();">
+                                <option value = "closest" selected>Closest</option>
+                                <option value = "up">Move Notes Up</option>
+                                <option value = "down">Move Notes Down</option>
+                            </select>
+                                    </p>
+
+                    <p class=font_element>
+                            <label>Transpose to key</label>
+                            <select id = "transpose_key" name="transpose_key"  onchange="save_parameter_change();">
+                                <option value = "None">None</option>
+                                <option value = "Ab">Ab</option>
+                                <option value = "A">A</option>
+                                <option value = "A#">A#</option>
+                                <option value = "Bb" >Bb</option>
+                                <option value = "B">B</option>
+                                <option value = "C">C</option>
+                                <option value = "C#" selected>C#</option>
+                                <option value = "Db">Db</option>
+                                <option value = "D">D</option>
+                                <option value = "D#">D#</option>
+                                <option value = "Eb">Eb</option>
+                                <option value = "E">E</option>
+                                <option value = "F">F</option>
+                                <option value = "F#">F#</option>
+                                <option value = "Gb">Gb</option>
+                                <option value = "G">G</option>
+                                <option value = "G#">G#</option>
+                            </select>
+
+
+            <form id=load_song>
+                <h3> Select XML file for transpose</h3>
+                <input type='file' id="get_file" accept=".xml,.musicxml" onchange='openFile(event);'>
+
+                <input type=text name="load_song" id = "load_song" value=1>
+            </form>
+
+            <p class=font_element>
+                <label>Show All Debugs in console</label>
+                <select id = "show_debugs_in_console" name="show_debugs_in_console" "   onchange="save_parameter_change();">
+                    <option value = "0" selected >No</option>
+                    <option value = "1">Yes</option>
+                </select>
+                        </p>
+
+            
+    
+            
+
+            
+            <p></p>
+            <button onclick="do_transpose();">Do Transpose</button>
+
+            <p></p>
+            <p class=font_element>
+                <label>Output File Name: (change before clicking 'Prepare Output FIle'</label>
+                <input type=text name="output_file_name" id = "output_file_name" >
+                        </p>
+
+            <div id='prepare_output_file' style='display:none;'>
+                <button onclick="prepare_output_file();">Prepare Output File</button>
+                <br>Click the Download button after 'Prepare Output File'
+            </div>
+
+            <p></p>
+        </div>
+
+        
+        <div id=download_div style="display:none;">
+            <a id="download_link" target="_blank" download="test.xml" ><button>Click here to Download <span id=download_output></span></button></a>
+        </div>
+        <div id=transposed_score>Transposed Score</div>
+
+        <script>
+        var elt_value;
+
+        
+    var osmds = new Array(5);
+
+    var xml_strings = [];
+
+
+
+
+
+        function set_element_value(sid, value){
+            elt = document.getElementById(sid);
+            if (!elt)
+            {
+                throw("ELT NOT FOUND: " + sid);
+            }
+            
+            if (elt.tagName == "SELECT")
+            {
+                for(var ii=0; ii < elt.options.length; ii++)
+                {
+                    elt_value = elt.options[ii].value;
+                    //console.log("ii: %s %s %s %s == %s", 
+                    //    ii, sid, value, elt_value, (value == elt_value) ? "T" : "F" )
+                    if(elt.options[ii].value == value)
+                    {
+                        elt.selectedIndex = ii;
+                        
+                        //console.log("Set element: %s value: %s index: %s", sid, ii, value);
+                        return;
+                    }
+                }
+                throw(sprintf("%s value not found: %s", sid, value));
+            }
+            else
+            {
+                elt.value = value;
+                console.log("sid: %s value: %s elt.value: %s", sid, value, elt.value);
+            }
+        }
+
+        function get_element_value(sid)
+        {
+            elt = document.getElementById(sid); 
+            if (!elt)
+                throw("elt not found: " + sid);
+            if (elt.tagName == "SELECT")
+            {
+                value = elt.options[elt.selectedIndex].value;
+            }
+            else
+                value = elt.value;
+            return(value);
+        
+        }
+
+        function get_element_number(sid)
+        {
+            value = get_element_value(sid);
+            value = Number(value);
+            return(value);
+        }
+
+        
+
+
+           
+    
+
+
+
+    var xml_string_loaded; // loaded from disk  
+    var xml_string_passed; //passed in local storage
+
+ 
+
+
+ 
+    
+
+
+
+    function save_parameter_change()
+    {
+        // this is used if we want to save parameters between sessions
+        return;
+    }
+
+
+
+
+    function do_transpose() {
+        console.log("DO TRANSPOSE");
+        //get_caller();
+
+        show_debugs_in_console = get_element_value("show_debugs_in_console");
+        if (show_debugs_in_console == "1")
+            parameters.show_output = true;
+        else
+            parameters.show_output = false;
+        
+        //console.log("DO_SONG: xml_string_passed(0, 100): %s", xml_string_passed.substr(0, 100));
+
+        get_parameters_from_elements(); // get latest parameters
+        xml_string = xml_string_loaded;
+
+        
+        if (!xml_string)
+            throw("NO XML STRING");
+            
+        // parameters used:
+        // transpose_key e.g. "Bb"
+        // transpose_direction - "up" or "down" (use closest if not set)
+        // song_name - not currently used
+        // show_output - true to show all console.logs
+            
+        console.log(`parameters.transpose_key: %s parameters.transpose_key != "None": %s`, 
+            parameters.transpose_key), parameters.transpose_key != "None";
+        if (parameters.transpose_key != "None");
+        {
+            xml_string = osmd_transpose.transpose_xml(parameters, xml_string);
+
+            // build output file name
+            output_file_name = get_element_value("output_file_name");
+            //if (output_file_name == "")
+            {
+                get_parameters_from_elements();
+                output_file_name = song_name.replace(".", "-" + parameters.transpose_key + ".");
+                set_element_value("output_file_name", output_file_name);
+        }
+
+        
+
+            console.log("output_file_name: %s", output_file_name);
+
+            elt = document.getElementById("prepare_output_file");
+            elt.style.display = "block";
+
+        }
+  
+
+
+   
+    }
+        //</script>
+    
+    </body >
+</html >
