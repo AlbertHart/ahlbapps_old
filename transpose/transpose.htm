@@ -156,19 +156,21 @@ function get_parameters_from_elements()
     
         function store_parameters()
         {
+            console.log(get_self());
             get_parameters_from_elements();
             json_string = JSON.stringify(parameters);
             console.log("json_string: %s", json_string);
 
             storage_key = parameters.song_name;
             if (!storage_key || storage_key == "")
-                storage_key = "no song name";
+                storage_key = "xml_transpose";
             console.log("setItem for storage_key: %s", storage_key);
             localStorage.setItem(storage_key, json_string);
 
         }
         function load_parameters(storage_key)
         {   
+            console.log("load_parameters: %s", storage_key);
             json_string = localStorage.getItem(storage_key);
             console.log("json_string: %s", json_string);
             parameters_parsed = JSON.parse(json_string);
@@ -278,7 +280,7 @@ function get_parameters_from_elements()
                     <p class=font_element>
                             <label>Transpose to key</label>
                             <select id = "transpose_key" name="transpose_key"  onchange="save_parameter_change();">
-                                <option value = "None">None</option>
+                                <option value = "None" selected>None</option>
                                 <option value = "Ab">Ab / Fm</option>
                                 <option value = "A">A / F#m</option>
                                     <!-- <option value = "A#">A#</option> -->
@@ -286,7 +288,7 @@ function get_parameters_from_elements()
                                 <option value = "B">B / G#m</option>
                                 <option value = "Cb">C / Abm</option>
                                 <option value = "C">C / Am</option>
-                                <option value = "C#" selected>C# / A#m</option>
+                                <option value = "C#">C# / A#m</option>
                                 <option value = "Db">Db / Bbm</option>
                                 <option value = "D">D / Bm</option>
                                     <!-- <option value = "D#">D#</option> -->
@@ -358,6 +360,8 @@ function get_parameters_from_elements()
 
     var xml_strings = [];
     var xml_string;
+
+    load_parameters("xml_transpose");
 
 
     function show_transposed_score()
@@ -445,13 +449,10 @@ function get_parameters_from_elements()
             return(value);
         }
 
-        
-
-
-           
-    
-
-
+        function get_self()
+        {
+            // don't display anything here
+        }
 
     var xml_string_loaded; // loaded from disk  
     var xml_string_passed; //passed in local storage
