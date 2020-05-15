@@ -129,6 +129,14 @@
             reader.readAsText(input.files[0]);
         };
 
+        // save parameters after every change
+        function save_parameter_change()
+        {
+            get_parameters_from_elements();
+            store_parameters();
+            return(true);
+        }
+
     
         
     // these read the latest parameters
@@ -145,6 +153,37 @@ function get_parameters_from_elements()
         add_to_parameters("transpose_key");
         add_to_parameters("transpose_direction");
     }
+    
+        function store_parameters()
+        {
+            get_parameters_from_elements();
+            json_string = JSON.stringify(parameters);
+            console.log("json_string: %s", json_string);
+
+            storage_key = parameters.song_name;
+            if (!storage_key || storage_key == "")
+                storage_key = "no song name";
+            console.log("setItem for storage_key: %s", storage_key);
+            localStorage.setItem(storage_key, json_string);
+
+        }
+        function load_parameters(storage_key)
+        {   
+            json_string = localStorage.getItem(storage_key);
+            console.log("json_string: %s", json_string);
+            parameters_parsed = JSON.parse(json_string);
+
+            for (var key in parameters_parsed)
+            {
+                var value = parameters_parsed[key];
+                console.log("load_parameters: key: %s value:  %s", key, value);
+                set_element_value(key, value);
+            }
+    
+
+        }
+
+
     
     var fileLoaded = function (event) {
         console.log("fileLoaded: event.target.result: %s", event.target.result.substr(0, 100));
@@ -286,7 +325,7 @@ function get_parameters_from_elements()
 
             <p></p>
             <p class=font_element>
-                <label>Output File Name: (change before clicking 'Prepare Output FIle'</label>
+                <label>Output File Name: (change before clicking 'Prepare Output File'</label>
                 <input type=text name="output_file_name" id = "output_file_name" >
                         </p>
 
@@ -425,11 +464,7 @@ function get_parameters_from_elements()
 
 
 
-    function save_parameter_change()
-    {
-        // this is used if we want to save parameters between sessions
-        return;
-    }
+
 
 
 
