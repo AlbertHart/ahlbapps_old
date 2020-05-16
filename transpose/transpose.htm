@@ -35,6 +35,7 @@
         // save parameters after every change
         function save_parameter_change()
         {
+            console.log("save_parameter_change");
             get_parameters_from_elements();
             store_parameters();
             return(true);
@@ -53,6 +54,8 @@
 
 function get_parameters_from_elements()
     {
+        console.log(get_self());
+        add_to_parameters("song_name");
         add_to_parameters("transpose_key");
         add_to_parameters("transpose_direction");
     }
