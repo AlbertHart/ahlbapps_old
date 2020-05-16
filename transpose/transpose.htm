@@ -508,11 +508,14 @@ function get_parameters_from_elements()
             elt.innerText = xml_string_out;
 
             // build output file name
-            output_file_name = get_element_value("output_file_name");
+
             //if (output_file_name == "")
             {
                 get_parameters_from_elements();
-                output_file_name = song_name.replace(".", "-" + parameters.transpose_key + ".");
+                output_file_name = song_name;
+                ipos = output_file_name.lastIndexOf(".");
+                if (ipos >= 0)
+                    output_file_name = output_file_name.substr(0, ipos) + "-" + parameters.transpose_key + output_file_name.substr(ipos);
                 set_element_value("output_file_name", output_file_name);
         }
 

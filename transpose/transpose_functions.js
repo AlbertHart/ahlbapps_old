@@ -267,13 +267,15 @@
     osmd_transpose.transpose_xml = function(parameters, xml_string_in)
 {
     this.parameters = parameters;
-    console.log("transpose_xml: transpose_key: %s str lenL %s", parameters.transpose_key, xml_string_in.length);
+    var xml_string = xml_string_in;
+
+    console.log("transpose_xml: transpose_key: %s xml_string_in.length: %s", parameters.transpose_key, xml_string_in.length);
     if (parameters.transpose_key == "None")
-        return;
+        return(xml_string);
 
     show_output = this.parameters.show_output;
 
-    var xml_string = xml_string_in;
+    
     str_out = "";
     in_note = false;
     in_measure = false;
