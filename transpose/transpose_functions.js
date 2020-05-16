@@ -146,9 +146,6 @@
         "Cb" : 12,
     };
 
-
-
-
         
     // when to bump the octave
     osmd_transpose.step_number = {
@@ -161,17 +158,8 @@
         "B" : 6,      
     };
 
-    osmd_transpose.new_key;
-
     osmd_transpose.old_key;
     osmd_transpose.new_key;
-
-
-    osmd_transpose.test2 = function(val) {
-        console.log("test2 VAL: %s", val); 
-    }
-
-    osmd_transpose.test2(21);
 
     osmd_transpose.transpose = function(old_step, old_alter, old_octave) 
     {
@@ -194,7 +182,7 @@
 
         old_key_number = this.note_numbers[old_key];
         new_key_number = this.note_numbers[new_key];
-        key_offset = new_key_number - old_key_number;
+        var key_offset = new_key_number - old_key_number;
 
         up_offset = (key_offset + 12) % 12; // move up
         down_offset = (key_offset - 12) % 12; // move down
@@ -326,10 +314,10 @@
             //    show_debugs = false;
             last_note_duration = 0;
             last_stem_direction = "";
-            if (new_key)
+            if (this.new_key)
                 {
                     // since this is an object, we need to clone it
-                    current_accidentals = JSON.parse(JSON.stringify(this.accidentals_in_key[new_key]));
+                    current_accidentals = JSON.parse(JSON.stringify(this.accidentals_in_key[this.new_key]));
                     if (show_output)
                         console.log("new_key: %s current_accidentals[F]: %s", new_key, current_accidentals["F"]);
                 }
