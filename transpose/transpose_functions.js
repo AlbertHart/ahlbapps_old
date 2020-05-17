@@ -1,24 +1,36 @@
 
     console.log("IN tranpose_functions.js");
 
-    var osmd_transpose = {};
+    // create namespace if it does not exist yet
+    var osmd_transpose = osmd_transpose || {};
+
+  
+    // add items to the namespace
+
     (function() {
-        this.id = 0;
+        // scan from <step>D</step>
+        this.get_xml_value = function(sline)
+        {
+            ipos = sline.indexOf("<");
+            if (ipos < 0)
+                return("");
 
+            stext = sline.substr(ipos);
+            // skip first <>
+            ipos2 = stext.indexOf(">");
+            stext = stext.substr(ipos2+1);
+            ipos3 = stext.indexOf("<");
+            stext = stext.substr(0, ipos3);
+            return(stext);
+        }
 
-        this.test = -1;
-     
-        this.next = function() {
-            return this.id++;    
-        };
-     
-        this.reset = function() {
-            this.id = 0;     
+        this.get_xml_number = function(sline)
+        {
+            value = this.get_xml_value(sline);
+            return (Number(value));
         }
     }).apply(osmd_transpose);    
      
-
-
 
     osmd_transpose.back = function() {
         console.log("BACK id: %s", this.id); 
@@ -309,7 +321,7 @@
             //  <divisions>256</divisions>
             if (sline.indexOf("<divisions>") >= 0)
             {
-                divisions = get_xml_number(sline);
+                divisions = this.get_xml_number(sline);
                 if (show_output)
                     console.log("divisions: %s", divisions);
             }
@@ -347,7 +359,7 @@
             // <fifths>-4</fifths>
             if (sline.indexOf("</fifths") >= 0)
             {
-                fifths = get_xml_number(sline);
+                fifths = this.get_xml_number(sline);
                 if (show_output)
                     console.log("SLINE: %s fifths: %s", sline, fifths);
                 line_of_fifths_c = this.line_of_fifths_numbers["C"];
@@ -516,25 +528,25 @@
             {
                 if (sline.indexOf("<duration>") >= 0)
                 {
-                    note.duration = get_xml_number(sline);
+                    note.duration = this.get_xml_number(sline);
                     //console.log("note.duration: %s", note.duration);
                     continue;   // output later
                 }
                 if (sline.indexOf("<voice>") >= 0)
                 {
-                    note.voice = get_xml_number(sline);
+                    note.voice = this.get_xml_number(sline);
                     //console.log("note.voice: %s", note.voice);
                     continue;   // output later
                 }
                 if (sline.indexOf("<type>") >= 0)
                 {
-                    note.type = get_xml_value(sline);
+                    note.type = this.get_xml_value(sline);
                     //console.log("note.type: %s", note.type);
                     continue;   // output later
                 }
                 if (sline.indexOf("<staff>") >= 0)
                 {
-                    note.staff = get_xml_number(sline);
+                    note.staff = this.get_xml_number(sline);
                     //console.log("note.staff: %s", note.staff);
                     continue;   // output later
                 }
@@ -573,17 +585,17 @@
             {
                 if (sline.indexOf("<step") >= 0)
                 {
-                    note.pitch.step = get_xml_value(sline);
+                    note.pitch.step = this.get_xml_value(sline);
                     continue;
                 }
                 if (sline.indexOf("<alter") >= 0)
                 {
-                    note.pitch.alter = get_xml_number(sline);
+                    note.pitch.alter = this.get_xml_number(sline);
                     continue;
                 }
                 if (sline.indexOf("<octave") >= 0)
                 {
-                    note.pitch.octave = get_xml_number(sline);
+                    note.pitch.octave = this.get_xml_number(sline);
                     continue;
                 }
             }
@@ -689,14 +701,14 @@
                     console.log("IN ROOT: %s", sline);
                 if (sline.indexOf("<root-step") >= 0)
                 {
-                    root_step = get_xml_value(sline);
+                    root_step = this.get_xml_value(sline);
                     if (show_output)
                         console.log("ROOT_STEP; %s", root_step);
                     continue;
                 }
                 else if (sline.indexOf("<root-alter") >= 0)
                 {
-                    root_alter = get_xml_number(sline);
+                    root_alter = this.get_xml_number(sline);
                     if (show_output)
                         console.log("root_alter; %s", root_alter);
                     continue;
@@ -752,14 +764,14 @@
                     console.log("IN bass: %s", sline);
                 if (sline.indexOf("<bass-step") >= 0)
                 {
-                    bass_step = get_xml_value(sline);
+                    bass_step = this.get_xml_value(sline);
                     if (show_output)
                         console.log("bass_STEP; %s", bass_step);
                     continue;
                         }
                 else if (sline.indexOf("<bass-alter") >= 0)
                 {
-                    bass_alter = get_xml_number(sline);
+                    bass_alter = this.get_xml_number(sline);
                     if (show_output)
                         console.log("bass_alter; %s", bass_alter);
                     continue;
@@ -785,21 +797,7 @@
         return(xml_string_out);
     }
 
-    // scan from <step>D</step>
-    function get_xml_value(sline)
-    {
-        ipos = sline.indexOf("<");
-        if (ipos < 0)
-            return("");
-
-        stext = sline.substr(ipos);
-        // skip first <>
-        ipos2 = stext.indexOf(">");
-        stext = stext.substr(ipos2+1);
-        ipos3 = stext.indexOf("<");
-        stext = stext.substr(0, ipos3);
-        return(stext);
-    }
+    
 
     osmd_transpose.set_default_accidentals = function()
     {
@@ -834,9 +832,5 @@
     }
 
 
-    function get_xml_number(sline)
-    {
-        value = get_xml_value(sline);
-        return (Number(value));
-    }
+    
 
