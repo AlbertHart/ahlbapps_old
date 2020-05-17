@@ -146,7 +146,10 @@
         "Cb" : 12,
     };
 
-        
+    
+
+
+
     // when to bump the octave
     osmd_transpose.step_number = {
         "C" : 0,
@@ -165,20 +168,22 @@
     {
         var parameters = this.parameters;
         show_output = parameters.show_output;
+
         if (show_output)
-            console.log("transpose: %s %s %s", old_step, old_alter, old_octave)
+            console.log("transpose(): old_step: %s old_alter: %s old_octave: %s", old_step, old_alter, old_octave)
         old_note = old_step;
         if (old_alter == 1)
             old_note += "#";
         else if (old_alter == -1)
             old_note += "b";
 
-        // move to local variables
+        // move to local variables for easier access
         var old_key = this.old_key;
         var new_key = this.new_key;
         
         
-        //console.log("old_key: %s new_key: %s old_note: %s", old_key, new_key, old_note);
+        if (show_output)
+            console.log("old_key: %s new_key: %s old_note: %s", old_key, new_key, old_note);
 
         old_key_number = this.note_numbers[old_key];
         new_key_number = this.note_numbers[new_key];
@@ -197,7 +202,7 @@
             
             if (Math.abs(up_offset) <= Math.abs(down_offset))
                 key_offset = up_offset;
-        else
+            else
                 key_offset = down_offset;
         }
         
@@ -253,72 +258,78 @@
     // show_output - true to show all console.logs
 
     osmd_transpose.transpose_xml = function(parameters, xml_string_in)
-{
-    this.parameters = parameters;
-    console.log("transpose_xml: transpose_key: %s str lenL %s", parameters.transpose_key, xml_string_in.length);
-    if (parameters.transpose_key == "None")
-        return;
-
-    show_output = this.parameters.show_output;
-
-    var xml_string = xml_string_in;
-    str_out = "";
-    in_note = false;
-    in_measure = false;
-    if (show_output)
-        console.log("xml_string length: %s", xml_string.length);
-    str_in = xml_string.split("\n");
-    if (show_output)
-        console.log("transpose_xml lines: %s", str_in.length);
-
-    in_pitch = false;
-    in_root = false;
-    in_bass = false;
-
-    duration = 0;
-    last_note_duration = 0;
-    last_stem_direction = "";
-    current_accidentals = {};
-
-    measure_count = 0; // measure count
-    divisions = 0;
-    show_debugs = false;    // to display output for only certain measures
-
-
-    for (ii = 0; ii < str_in.length; ii++)
     {
-        sline = str_in[ii];
+        this.parameters = parameters;
+        var xml_string = xml_string_in;
+
+        console.log("transpose_xml: transpose_key: %s xml_string_in.length: %s", parameters.transpose_key, xml_string_in.length);
+        if (parameters.transpose_key == "None")
+            return(xml_string);
+
+        show_output = this.parameters.show_output;
+
+
+
+        // move to local variables for easier access
+        var old_key = this.old_key;
+        var new_key = this.new_key;
+
+        
+        str_out = "";
+        in_note = false;
+        in_measure = false;
         if (show_output)
-            console.log("ii: %s sline: %s", ii, sline);
+            console.log("xml_string length: %s", xml_string.length);
+        str_in = xml_string.split("\n");
+        if (show_output)
+            console.log("transpose_xml lines: %s", str_in.length);
 
-        //  divisions element indicates how many divisions per quarter note are used to indicate a note's duration
-        //  <divisions>256</divisions>
-        if (sline.indexOf("<divisions>") >= 0)
-        {
-            divisions = get_xml_number(sline);
-            if (show_output)
-                console.log("divisions: %s", divisions);
-        }
+        in_pitch = false;
+        pitch_values = {};
+        in_root = false;
+        in_bass = false;
 
-        if (sline.indexOf("<measure") >= 0)
+
+        last_note_duration = 0;
+        last_stem_direction = "";
+        this.current_accidentals = []; // accidental for octave and note
+
+        measure_count = 0; // measure count
+        divisions = 0;
+        show_debugs = false;    // to display output for only certain measures
+
+
+        for (ii = 0; ii < str_in.length; ii++)
         {
-            // break grouped notes at measure
-            measure_count++;
+            sline = str_in[ii];
             if (show_output)
-                console.log("MEASURE: %s: %s", measure_count, sline);
-            //if (measure_count < 15)
-            //    show_debugs = true;
-            //if (measure_count > 16)
-            //    show_debugs = false;
-            last_note_duration = 0;
-            last_stem_direction = "";
-            if (this.new_key)
-                {
-                    // since this is an object, we need to clone it
-                    current_accidentals = JSON.parse(JSON.stringify(this.accidentals_in_key[this.new_key]));
-                    if (show_output)
-                        console.log("new_key: %s current_accidentals[F]: %s", new_key, current_accidentals["F"]);
-                }
+                console.log("sline: %s", sline);
+
+            //  divisions element indicates how many divisions per quarter note are used to indicate a note's duration
+            //  <divisions>256</divisions>
+            if (sline.indexOf("<divisions>") >= 0)
+            {
+                divisions = get_xml_number(sline);
+                if (show_output)
+                    console.log("divisions: %s", divisions);
+            }
+
+            if (sline.indexOf("<measure") >= 0)
+            {
+                // break grouped notes at measure
+                measure_count++;
+                if (show_output)
+                    console.log("MEASURE: %s: %s", measure_count, sline);
+                //if (measure_count < 15)
+                //    show_debugs = true;
+                //if (measure_count > 16)
+                //    show_debugs = false;
+                last_note_duration = 0;
+                last_stem_direction = "";
+
+  	
+	            this.current_accidentals = [];
+
             }
 
 
@@ -349,24 +360,154 @@
                 new_line_of_fifths_number = this.line_of_fifths_numbers[this.new_key] - line_of_fifths_c;
                 if (show_output)
                     console.log("<fifths>%s</fifths> old_key: %s new_key: %s \n", new_line_of_fifths_number, this.old_key, this.new_key);
-                str_out += `<fifths>` + new_line_of_fifths_number+ `</fifths>`;
+                str_out += `<fifths>` + new_line_of_fifths_number+ `</fifths>\n`;
                 
-                // since this is an object, we need to clone it
-                current_accidentals = JSON.parse(JSON.stringify(this.accidentals_in_key[this.new_key]));
-                if (show_output)
-                    console.log("new_key: %s current_accidentals[F]: %s", this.new_key, current_accidentals["F"]);
-                continue;
+                this.current_accidentals = [];
+
+                // musescore puts mode on the same line as fifths
+                ipos = sline.indexOf("</fifths");
+                sline = sline.substr(ipos + 9);
+                sline = sline.trim();
+ 
+                if (sline == "")
+                    continue;
+                // otherwise pass through
             }
+
 
             if (sline.indexOf("<note") >= 0)
             {
                 in_note = true;
 
+                note = {rest: null, chord: null, pitch: null, duration: null, voice: null, type: null, stem: null, staff: null};
+
+                note_start = sline.trim(); // to put out later
+                additional_note_items = "";
+
+                /***
+                  <note default-x="105.68" default-y="-255.00">
+                    <chord/>
+                    <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                    </pitch>
+                    <duration>4</duration>
+                    <voice>5</voice>
+                    <type>quarter</type>
+                    <stem>up</stem>
+                    <staff>2</staff>
+                    </note>
+                 */
+                continue;
 
             } 
             if (sline.indexOf("</note") >= 0)
             {
+                note_xml = note_start + "\n";;
+                if (note.rest)
+                {
+                    note_xml += ` <rest/>\n`;
+                }
+
+                if (note.pitch)
+                {
+
+                    pitch_xml = ` <pitch>\n`;
+                    pitch_xml += `  <step>` + transposed_note.step + `</step>\n`;
+                    snew_step = transposed_note.step;
+                    snew_note = transposed_note.step;
+                    new_accidental = "";
+                    if (transposed_note.alter == 1)
+                    {
+                        new_accidental = "sharp";
+                        snew_note = snew_note + "#";
+                        pitch_xml += `  <alter>` + transposed_note.alter + `</alter>\n`;
+                    }
+                    else if (transposed_note.alter == -1)
+                    {
+                        new_accidental = "flat";
+                        snew_note = snew_note + "b";
+                        pitch_xml += `  <alter>` + transposed_note.alter + `</alter>\n`;
+                    }
+                    
+
+                    // see if we need a new accidental
+                    current_accidental = this.get_current_accidental(note.voice, note.pitch.octave, snew_step);
+                    if (show_output)
+                        console.log("snew_step: %s snew_note: %s current_accidental: %s", snew_step, snew_note, current_accidental);
+
+                    //current_accidental = current_accidentals[note.voice][note.pitch.octave][snew_note];
+                    if (show_output)
+                        console.log("snew_note: %s transposed_note.alter: %s note.voice: %s note.pitch.octave: %s current_accidental: %s new_accidental: %s",
+                            snew_note, transposed_note.alter, note.voice, note.pitch.octave, current_accidental,  new_accidental);
+
+                
+                    if (current_accidental == new_accidental)
+                    {
+                        accidental_out = "";     // no change from key or last note
+                    }
+                    else if (new_accidental == "")
+                    {
+                        accidental_out = "natural";               
+                    }
+                    else 
+                    {
+                        accidental_out = new_accidental;
+                    }
+                    if (show_debugs)
+                        console.log("snew_note: %s transposed_note.alter: %s new_accidental: %s snew_note: %s accidental_out: %s",
+                            snew_note, transposed_note.alter, new_accidental, snew_note, accidental_out);
+
+                    this.current_accidentals[note.voice][note.pitch.octave][snew_step] = new_accidental;
+
+
+                    pitch_xml += `  <octave>` + transposed_note.octave + `</octave>\n`;
+                    pitch_xml += ` </pitch>\n`;
+                    if (show_output)
+                        console.log("PITCH_XML: %s", pitch_xml);
+            
+                    note_xml += pitch_xml;
+                }
+
+                /***
+                  <note default-x="105.68" default-y="-255.00">
+                    <chord/>
+                    <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                    </pitch>
+                    <duration>4</duration>
+                    <voice>5</voice>
+                    <type>quarter</type>
+                    <stem>up</stem>
+                    <staff>2</staff>
+                    </note>
+                 */
+
+                if (note.duration !== null)
+                    note_xml += ` <duration>` + note.duration + `</duration>\n`;
+                if (note.voice !== null)
+                    note_xml += ` <voice>` + note.voice + `</voice>\n`;
+                if (note.type)
+                    note_xml += ` <type>` + note.type + `</type>\n`;
+                if (note.stem)
+                    note_xml += ` <stem>` + note.stem + `</stem>\n`;
+                if (note.staff !== null)
+                    note_xml += ` <staff>` + note.staff + `</staff>\n`;
+
+                if (additional_note_items)
+                {
+                    //console.log("additional_note_items: %s", additional_note_items);
+                    note_xml += additional_note_items;
+                }
+                note_xml += `</note>\n`;
+
+                //console.log("note_xml: %s", note_xml);
+
+
+                str_out += note_xml;
                 in_note = false;
+                continue;
 
 
             }
@@ -375,81 +516,56 @@
             {
                 if (sline.indexOf("<duration>") >= 0)
                 {
-                    duration = get_xml_number(sline);
-                    //console.log("duration: %s", duration);
+                    note.duration = get_xml_number(sline);
+                    //console.log("note.duration: %s", note.duration);
+                    continue;   // output later
+                }
+                if (sline.indexOf("<voice>") >= 0)
+                {
+                    note.voice = get_xml_number(sline);
+                    //console.log("note.voice: %s", note.voice);
+                    continue;   // output later
+                }
+                if (sline.indexOf("<type>") >= 0)
+                {
+                    note.type = get_xml_value(sline);
+                    //console.log("note.type: %s", note.type);
+                    continue;   // output later
+                }
+                if (sline.indexOf("<staff>") >= 0)
+                {
+                    note.staff = get_xml_number(sline);
+                    //console.log("note.staff: %s", note.staff);
+                    continue;   // output later
+                }
+                if (sline.indexOf("<rest") >= 0)
+                {
+                    note.rest = true;
+                    //console.log("note.rest: %s", note.rest);
+                    continue;   // output later
                 }
             }
 
             // <pitch>
             //     <step>E</step>
             //     <alter>-1</alter>
-            //     <octave>4</octave>
+            //     <octave>4</octave>S
             //     </pitch>
             if (sline.indexOf("<pitch") >= 0)
             {
                 in_pitch = true;
-                
-                pitch_alter = "";
-                pitch_step = "";
-                pitch_octave = "";
+
+                note.pitch = {alter: 0, step: 0, octave: 0};
                 new_accidental = "";
-                continue;
+                continue;   // output later
             }
             if (sline.indexOf("</pitch") >= 0)
             {
-                transposed_note = this.transpose(pitch_step, pitch_alter, pitch_octave);
+                transposed_note = this.transpose(note.pitch.step, note.pitch.alter, note.pitch.octave);
 
-                pitch_xml = `<pitch>
-                <step>` + transposed_note.step + `</step>\n`;
-                snew_note = transposed_note.step;
-                new_accidental = "";
-                if (transposed_note.alter == 1)
-                {
-                    new_accidental = "sharp";
-                    snew_note = snew_note + "#";
-                pitch_xml += `     <alter>` + transposed_note.alter + `</alter>\n`;
-                }
-                else if (transposed_note.alter == -1)
-                {
-                    new_accidental = "flat";
-                    snew_note = snew_note + "b";
-                pitch_xml += `     <alter>` + transposed_note.alter + `</alter>\n`;
-                }
-                if (show_output)
-                    console.log("snew_note: %s current_accidentals[%s]: %s", snew_note, snew_note, current_accidentals[snew_note]);
-                current_accidental = current_accidentals[snew_note];
-                if (show_output)
-                    console.log("snew_note: %s transposed_note.alter: %s current_accidental: %s new_accidental: %s",
-                        snew_note, transposed_note.alter, current_accidental,  new_accidental);
-
-            
-                if (current_accidental == new_accidental)
-                {
-                    accidental_out = "";     // no change from key or last note
-                }
-                else if (new_accidental == "")
-                {
-                    accidental_out = "natural";               
-                }
-                else 
-                {
-                    accidental_out = new_accidental;
-                }
-                if (show_debugs)
-                    console.log("snew_note: %s transposed_note.alter: %s new_accidental: %s snew_note: %s accidental_out: %s",
-                        snew_note, transposed_note.alter, new_accidental, snew_note, accidental_out);
-
-                current_accidentals[snew_note] = new_accidental;
-
-
-                pitch_xml += `     <octave>` + transposed_note.octave + `</octave>
-                    </pitch>\n`;
-                if (show_output)
-                    console.log("PITCH_XML: %s", pitch_xml);
-        
-                str_out += pitch_xml;
+                
                 in_pitch = false;
-                continue;
+                continue;   // output later
             }
                 
             
@@ -457,17 +573,17 @@
             {
                 if (sline.indexOf("<step") >= 0)
                 {
-                    pitch_step = get_xml_value(sline);
+                    note.pitch.step = get_xml_value(sline);
                     continue;
                 }
                 if (sline.indexOf("<alter") >= 0)
                 {
-                    pitch_alter = get_xml_number(sline);
+                    note.pitch.alter = get_xml_number(sline);
                     continue;
                 }
                 if (sline.indexOf("<octave") >= 0)
                 {
-                    pitch_octave = get_xml_number(sline);
+                    note.pitch.octave = get_xml_number(sline);
                     continue;
                 }
             }
@@ -484,7 +600,7 @@
                         console.log("<accidental>%s</accidental>\n", accidental_out);
                     str_out += `<accidental>` + accidental_out + `</accidental>\n`;
                 }
-                continue;
+                continue;   // output later
                 
             }
 
@@ -492,36 +608,44 @@
             if (sline.indexOf("<stem>") >= 0)
             {
                 // if in eighth or smaller group - keep same stem
-                if (duration < divisions && last_note_duration > 0 && last_note_duration < divisions)
+                if (note.voice > 1)
+                    note.stem = "down";    // other voices tend to go down
+                else if (note.duration < divisions && last_note_duration > 0 && last_note_duration < divisions)
                 {
                     if (show_output)
                         console.log("USE LAST STEM DIRECTION: %s", last_stem_direction);
-                    stem_direction = last_stem_direction;
+                    note.stem = last_stem_direction;
                 }
-                else if (pitch_octave > 4)
-                    stem_direction = "down";
-                else if (pitch_octave < 4)
-                    stem_direction = "up";
-                else if (pitch_step == "B")
-                    stem_direction = "down";
+                else if (note.pitch.octave > 4)
+                    note.stem = "down";
+                else if (note.pitch.octave < 4)
+                    note.stem = "up";
+                else if (note.pitch.step == "B")
+                    note.stem = "down";
                 else
-                    stem_direction = "up";
+                    note.stem = "up";
 
                 
 
                 if (show_output)
-                        console.log("duration: %s last_note_duration: %s last_stem_direction: %s pitch_octave: %s pitch_step: %s new stem_direction: %s",
-                            duration, last_note_duration, last_stem_direction, pitch_octave, pitch_step, stem_direction );
+                        console.log("note.duration: %s last_note_duration: %s last_stem_direction: %s note.pitch.octave: %s note.pitch.step: %s new note.stem: %s",
+                            note.duration, last_note_duration, last_stem_direction, note.pitch.octave, note.pitch.step, note.stem );
 
 
-                last_stem_direction = stem_direction;
-                last_note_duration = duration;
-            str_out += `<stem>` + stem_direction + `</stem>\n`;
+                last_stem_direction = note.stem;
+                last_note_duration = note.duration;
+            
                 continue;
             }
 
         
-                
+            if (in_note)
+            {
+                // items we do not process - but just add to <note>
+                //console.log("IN NOTE pass through: %s", sline);  
+                additional_note_items += " " + sline.trim() + "\n";
+                continue;
+            }
             
             // transpose root
             // <root>
@@ -608,10 +732,10 @@
                 transposed_note = this.transpose(bass_step, bass_alter, 0);
 
 
-                bass_xml = `<bass>
-                    <bass-step>` + transposed_note.step + `</bass-step>\n`;
+                bass_xml = `<bass>\n`;
+                bass_xml = ` <bass-step>` + transposed_note.step + `</bass-step>\n`;
                 if (transposed_note.alter != 0)
-                bass_xml += `     <bass-alter>` + transposed_note.alter + `</bass-alter>\n`;
+                bass_xml += ` <bass-alter>` + transposed_note.alter + `</bass-alter>\n`;
 
                 
                 bass_xml += `</bass>\n`;
@@ -649,7 +773,7 @@
 
             str_out += sline + "\n";
 
-
+        
             
         }
 
@@ -676,6 +800,39 @@
         stext = stext.substr(0, ipos3);
         return(stext);
     }
+
+    osmd_transpose.set_default_accidentals = function()
+    {
+        // wee need to track accidentals by both voice and octave
+        current_accidentals = [];
+        for (var voice = 0; voice < 5; voice++)
+        {
+            current_accidentals[voice] = [];
+            for (var octave = 0; octave < 10; octave++)
+            {
+                current_accidentals[voice][octave] = JSON.parse(JSON.stringify(this.accidentals_in_key[this.new_key]));
+            }
+        }
+    }
+
+    osmd_transpose.get_current_accidental = function(voice, octave, note)
+    {
+        // we need to track accidentals by both voice and octave
+        if (!this.current_accidentals[voice])
+        {
+            this.current_accidentals[voice] = [];
+        }
+        
+        if (!this.current_accidentals[voice][octave])
+        {
+            // since this is an object, we need to clone it
+            this.current_accidentals[voice][octave] = JSON.parse(JSON.stringify(this.accidentals_in_key[this.new_key]));
+        }
+        // see if we need "this.""
+       // console.log("note: %s current_accidental: %s", note, this.current_accidentals[voice][octave][note]);
+        return (this.current_accidentals[voice][octave][note]);
+    }
+
 
     function get_xml_number(sline)
     {
