@@ -6,7 +6,7 @@
 
     <link rel="stylesheet" href="css.css" />
     <script src="transpose_functions.js?v=2.65"></script>
-    
+    <!--  <script src="music-xml-transpose.ts"> -->
     <!-- this uses the namespace object osmd_transpose to access transpose functions.js -->
 
 
@@ -52,12 +52,23 @@
 
     }
 
+    function add_to_parameters_number(svar)
+    {
+        value = get_element_value(svar);
+        //console.log("add_to_parameters: svar: %s: value: %s", svar, value);
+        parameters[svar] = Number(value);
+
+    }
+
 function get_parameters_from_elements()
     {
         console.log(get_self());
         add_to_parameters("song_name");
         add_to_parameters("transpose_key");
         add_to_parameters("transpose_direction");
+        add_to_parameters_number("show_output");
+
+
     }
     
         function store_parameters()
@@ -206,9 +217,8 @@ function get_parameters_from_elements()
                                 <option value = "G">G / Em</option>
                                     <!-- <option value = "G#">G#</option> -->
                             </select>
-
-
-            <form id=load_song>
+                            
+            <form >
                 <h3> Select Music XML file for transpose</h3>
                 <input type='file' id="get_file" accept=".xml,.musicxml" onchange='openFile(event);'>
 
@@ -217,9 +227,9 @@ function get_parameters_from_elements()
 
             <p class=font_element>
                 <label>Show All Debugs in console</label>
-                <select id = "show_debugs_in_console" name="show_debugs_in_console" "   onchange="save_parameter_change();">
-                    <option value = "0" selected >No</option>
-                    <option value = "1">Yes</option>
+                <select id = "show_output" name="show_output" "   onchange="save_parameter_change();">
+                    <option value = 0 selected >No</option>
+                    <option value = 1 >Yes</option>
                 </select>
                         </p>
 
@@ -320,16 +330,16 @@ function get_parameters_from_elements()
                     {
                         elt.selectedIndex = ii;
                         
-                        //console.log("Set element: %s value: %s index: %s", sid, ii, value);
+                        //console.log("set_element_value: SELECT: %s value: %s index: %s", sid, ii, value);
                         return;
                     }
                 }
-                throw(sprintf("%s value not found: %s", sid, value));
+                throw(sid + " - value not found: " + value, sid, value);
             }
             else
             {
                 elt.value = value;
-                console.log("sid: %s value: %s elt.value: %s", sid, value, elt.value);
+                //console.log("set_element_value: sid: %s value: %s elt.value: %s", sid, value, elt.value);
             }
         }
 
@@ -358,6 +368,7 @@ function get_parameters_from_elements()
         function get_self()
         {
             // don't display anything here
+            return("");
         }
 
     var xml_string_loaded; // loaded from disk  
@@ -380,11 +391,7 @@ function get_parameters_from_elements()
         console.log("DO TRANSPOSE");
         //get_caller();
 
-        show_debugs_in_console = get_element_value("show_debugs_in_console");
-        if (show_debugs_in_console == "1")
-            parameters.show_output = true;
-        else
-            parameters.show_output = false;
+        
         
         //console.log("DO_SONG: xml_string_passed(0, 100): %s", xml_string_passed.substr(0, 100));
 
