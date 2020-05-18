@@ -753,7 +753,7 @@
 
 
                 bass_xml = `<bass>\n`;
-                bass_xml = ` <bass-step>` + transposed_note.step + `</bass-step>\n`;
+                bass_xml += ` <bass-step>` + transposed_note.step + `</bass-step>\n`;
                 if (transposed_note.alter != 0)
                 bass_xml += ` <bass-alter>` + transposed_note.alter + `</bass-alter>\n`;
 
