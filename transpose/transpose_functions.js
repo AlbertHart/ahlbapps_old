@@ -314,6 +314,12 @@
         for (ii = 0; ii < str_in.length; ii++)
         {
             sline = str_in[ii];
+            // skip note-size alike, conflict with note element
+            if (sline.indexOf('<note-') > -1) {
+                str_out += sline;
+                str_out += "\n";
+                continue;
+            }
             if (show_output)
                 console.log("sline: %s", sline);
 
