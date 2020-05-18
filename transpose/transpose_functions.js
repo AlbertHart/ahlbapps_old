@@ -314,12 +314,6 @@
         for (ii = 0; ii < str_in.length; ii++)
         {
             sline = str_in[ii];
-            // skip note-size alike, conflict with note element
-            if (sline.indexOf('<note-') > -1) {
-                str_out += sline;
-                str_out += "\n";
-                continue;
-            }
             if (show_output)
                 console.log("sline: %s", sline);
 
@@ -390,6 +384,14 @@
                 if (sline == "")
                     continue;
                 // otherwise pass through
+            }
+
+
+            // skip note-size alike, conflict with note element
+            if (sline.indexOf('<note-') > -1) {
+                str_out += sline;
+                str_out += "\n";
+                continue;
             }
 
 
@@ -639,7 +641,7 @@
                 else if (note.pitch.octave < 4)
                     note.stem = "up";
                 else if (note.pitch.step == "B")
-                    note.stem = "down";
+                    note.stem = "down"; // octave 3 - B
                 else
                     note.stem = "up";
 

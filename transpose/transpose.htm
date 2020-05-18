@@ -289,7 +289,7 @@ function get_parameters_from_elements()
     function copy_transposed_score()
     {
         if (!xml_string || xml_string == "")
-            alert("No Transposed Score availble");
+            alert("No Transposed Score available");
         else
         {
             copyToClipboard(xml_string);
@@ -412,6 +412,7 @@ function get_parameters_from_elements()
             parameters.transpose_key), parameters.transpose_key != "None";
         if (parameters.transpose_key != "None");
         {
+            // xml_string is used for file save, display and copy to clipboard.
             xml_string = osmd_transpose.transpose_xml(parameters, xml_string);
 
             elt = document.getElementById("transposed_score");
