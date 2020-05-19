@@ -27,6 +27,8 @@
         this.get_xml_number = function(sline)
         {
             value = this.get_xml_value(sline);
+            if (value == "")
+                value = 0;
             return (Number(value));
         }
     }).apply(osmd_transpose);    
@@ -399,7 +401,7 @@
             {
                 in_note = true;
 
-                note = {rest: null, chord: null, pitch: null, duration: null, voice: null, type: null, stem: null, staff: null};
+                note = {rest: null, chord: null, pitch: null, duration: null, voice: null, type: null, dot: null, accidental: null, stem: null, staff: null};
 
                 note_start = sline.trim(); // to put out later
                 additional_note_items = "";
@@ -428,6 +430,12 @@
                 {
                     note_xml += ` <rest/>\n`;
                 }
+
+                if (note.chord)
+                {
+                    note_xml += ` <chord/>\n`;
+                }
+                
 
                 if (note.pitch)
                 {
@@ -464,19 +472,21 @@
                 
                     if (current_accidental == new_accidental)
                     {
-                        accidental_out = "";     // no change from key or last note
+                        note.accidental = "";     // no change from key or last note
                     }
                     else if (new_accidental == "")
                     {
-                        accidental_out = "natural";               
+                        note.accidental = "natural";               
                     }
                     else 
                     {
-                        accidental_out = new_accidental;
+                        note.accidental = new_accidental;
                     }
                     if (show_debugs)
-                        console.log("snew_note: %s transposed_note.alter: %s new_accidental: %s snew_note: %s accidental_out: %s",
-                            snew_note, transposed_note.alter, new_accidental, snew_note, accidental_out);
+                        console.log("snew_note: %s transposed_note.alter: %s new_accidental: %s snew_note: %s note.accidental: %s",
+                            snew_note, transposed_note.alter, new_accidental, snew_note, note.accidental);
+
+                    
 
                     this.current_accidentals[note.voice][note.pitch.octave][snew_step] = new_accidental;
 
@@ -510,6 +520,14 @@
                     note_xml += ` <voice>` + note.voice + `</voice>\n`;
                 if (note.type)
                     note_xml += ` <type>` + note.type + `</type>\n`;
+                if (note.dot)
+                    note_xml += ` <dot>` + note.dot + `</dot>\n`;
+                if (note.accidental && note.accidental != "")
+                {
+                    if (show_debugs)
+                        console.log("<accidental>%s</accidental>\n", note.accidental);
+                    note_xml += `<accidental>` + note.accidental + `</accidental>\n`;
+                }
                 if (note.stem)
                     note_xml += ` <stem>` + note.stem + `</stem>\n`;
                 if (note.staff !== null)
@@ -551,6 +569,11 @@
                     note.type = this.get_xml_value(sline);
                     //console.log("note.type: %s", note.type);
                     continue;   // output later
+                };
+                if (sline.indexOf("<dot") >= 0)
+                {
+                    note.dot = true
+                    continue;   // output later
                 }
                 if (sline.indexOf("<staff>") >= 0)
                 {
@@ -562,6 +585,12 @@
                 {
                     note.rest = true;
                     //console.log("note.rest: %s", note.rest);
+                    continue;   // output later
+                }
+                if (sline.indexOf("<chord") >= 0)
+                {
+                    note.chord = true;
+                    //console.log("note.chord: %s", note.chord);
                     continue;   // output later
                 }
             }
@@ -614,12 +643,7 @@
             // and the accidentals in this key
             if (sline.indexOf("<accidental>") >= 0)
             {
-                if (accidental_out != "")
-                {
-                    if (show_debugs)
-                        console.log("<accidental>%s</accidental>\n", accidental_out);
-                    str_out += `<accidental>` + accidental_out + `</accidental>\n`;
-                }
+                // we will calculate accidentals ourselves after transpose
                 continue;   // output later
                 
             }
