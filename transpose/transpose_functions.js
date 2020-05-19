@@ -401,7 +401,7 @@
             {
                 in_note = true;
 
-                note = {rest: null, chord: null, pitch: null, duration: null, voice: null, type: null, dot: null, accidental: null, stem: null, staff: null};
+                note = {rest: null, chord: null, pitch: null, duration: null, tie: null, voice: null, type: null, dot: null, accidental: null, stem: null, staff: null};
 
                 note_start = sline.trim(); // to put out later
                 additional_note_items = "";
@@ -516,12 +516,14 @@
 
                 if (note.duration !== null)
                     note_xml += ` <duration>` + note.duration + `</duration>\n`;
+                if (note.tie)
+                    note_xml += note.tie + "\n";   // exactly as found
                 if (note.voice !== null)
                     note_xml += ` <voice>` + note.voice + `</voice>\n`;
                 if (note.type)
                     note_xml += ` <type>` + note.type + `</type>\n`;
                 if (note.dot)
-                    note_xml += ` <dot>` + note.dot + `</dot>\n`;
+                    note_xml += `<dot/>\n`;
                 if (note.accidental && note.accidental != "")
                 {
                     if (show_debugs)
@@ -556,6 +558,16 @@
                 {
                     note.duration = this.get_xml_number(sline);
                     //console.log("note.duration: %s", note.duration);
+                    continue;   // output later
+                }
+                if (sline.indexOf("<tied") >= 0)
+                {
+                    // pass through
+                }
+                else if (sline.indexOf("<tie") >= 0)
+                {
+                    note.tie = sline;   // save entire line
+                    console.log("note.tie: %s", note.tie);
                     continue;   // output later
                 }
                 if (sline.indexOf("<voice>") >= 0)
